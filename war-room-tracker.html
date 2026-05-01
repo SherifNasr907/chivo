@@ -1,0 +1,718 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>CDH War Room — Action Plan Tracker</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root{
+    --bg:#0b1220; --panel:#0f172a; --panel2:#111c33; --line:#1e293b;
+    --ink:#e6edf7; --mute:#94a3b8;
+    --g:#10b981; --y:#f59e0b; --r:#ef4444; --b:#3b82f6; --p:#a855f7;
+  }
+  html,body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Inter,sans-serif}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px}
+  .panel2{background:var(--panel2);border:1px solid var(--line);border-radius:10px}
+  .chip{font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--line)}
+  .pill-g{background:rgba(16,185,129,.12);color:#34d399;border-color:rgba(16,185,129,.4)}
+  .pill-y{background:rgba(245,158,11,.12);color:#fbbf24;border-color:rgba(245,158,11,.4)}
+  .pill-r{background:rgba(239,68,68,.12);color:#f87171;border-color:rgba(239,68,68,.4)}
+  .pill-b{background:rgba(59,130,246,.12);color:#60a5fa;border-color:rgba(59,130,246,.4)}
+  .pill-p{background:rgba(168,85,247,.12);color:#c084fc;border-color:rgba(168,85,247,.4)}
+  table{width:100%;border-collapse:separate;border-spacing:0}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mute);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel)}
+  td{padding:10px 12px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:top}
+  tr:hover td{background:rgba(255,255,255,.02)}
+  select,input,textarea{background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:6px 10px;font-size:13px}
+  select:focus,input:focus,textarea:focus{outline:none;border-color:#3b82f6}
+  .tab{padding:9px 14px;border-radius:10px;font-size:13px;color:var(--mute);cursor:pointer;border:1px solid transparent}
+  .tab.active{background:var(--panel);color:var(--ink);border-color:var(--line)}
+  .kpi{display:flex;flex-direction:column;gap:4px}
+  .kpi .v{font-size:22px;font-weight:600;letter-spacing:-.01em}
+  .kpi .l{font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.06em}
+  .bar{height:6px;background:#1e293b;border-radius:999px;overflow:hidden}
+  .bar > span{display:block;height:100%}
+  .btn{font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);cursor:pointer}
+  .btn:hover{border-color:#3b82f6}
+  .btn-pri{background:#2563eb;border-color:#2563eb}
+  .btn-pri:hover{background:#1d4ed8}
+  .btn-d{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.4);color:#f87171}
+  .light{display:inline-block;width:8px;height:8px;border-radius:99px;margin-right:6px}
+  .light.g{background:var(--g)} .light.y{background:var(--y)} .light.r{background:var(--r)} .light.b{background:var(--b)}
+  .scroll{max-height:70vh;overflow:auto}
+  .grad{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%)}
+  textarea{min-height:38px;resize:vertical;width:100%}
+  .num{font-variant-numeric:tabular-nums}
+  details>summary{cursor:pointer;list-style:none}
+  details>summary::-webkit-details-marker{display:none}
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- ================= HEADER ================= -->
+<header class="border-b border-slate-800">
+  <div class="max-w-[1400px] mx-auto px-6 py-5 flex items-center justify-between">
+    <div>
+      <div class="text-[11px] uppercase tracking-[0.2em] text-slate-400">Cleo Dutch Holdings  ·  Top Management</div>
+      <h1 class="text-2xl font-semibold mt-1">War Room — Action Plan Tracker</h1>
+      <div class="text-xs text-slate-400 mt-1">Approach C methodology  ·  SPV denominator  ·  Sunday governance cadence</div>
+    </div>
+    <div class="flex items-center gap-2">
+      <span id="periodLabel" class="chip pill-b">Period: <span id="period">May 2026</span></span>
+      <button class="btn" onclick="exportJSON()">Export</button>
+      <button class="btn" onclick="importJSON()">Import</button>
+      <button class="btn btn-d" onclick="resetAll()">Reset</button>
+    </div>
+  </div>
+  <div class="max-w-[1400px] mx-auto px-6 pb-3 flex gap-1 flex-wrap">
+    <div class="tab active" data-tab="scorecard">1. Scorecard</div>
+    <div class="tab" data-tab="actions">2. Action Plan (Activities)</div>
+    <div class="tab" data-tab="decisions">3. Decision Log</div>
+    <div class="tab" data-tab="risks">4. Risk Register</div>
+    <div class="tab" data-tab="brands">5. Brand Cap Breach</div>
+    <div class="tab" data-tab="agenda">6. Sunday Agenda</div>
+  </div>
+</header>
+
+<main class="max-w-[1400px] mx-auto px-6 py-6 space-y-6">
+
+<!-- ================= 1. SCORECARD ================= -->
+<section data-pane="scorecard" class="space-y-4">
+
+  <!-- Top KPI strip -->
+  <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+    <div class="panel p-4 kpi">
+      <div class="l">Blended C2</div>
+      <div class="flex items-baseline gap-2"><div class="v num" id="kpiC2">41.0%</div><span class="chip pill-r">target ≥ 45%</span></div>
+      <div class="bar mt-2"><span style="width:91%;background:var(--y)"></span></div>
+    </div>
+    <div class="panel p-4 kpi">
+      <div class="l">Blended MER</div>
+      <div class="flex items-baseline gap-2"><div class="v num" id="kpiMER">3.9×</div><span class="chip pill-r">floor 5.5×</span></div>
+      <div class="bar mt-2"><span style="width:65%;background:var(--r)"></span></div>
+    </div>
+    <div class="panel p-4 kpi">
+      <div class="l">Marketing + Tools / SPV</div>
+      <div class="flex items-baseline gap-2"><div class="v num" id="kpiMkt">27.9%</div><span class="chip pill-r">cap ≤ 20%</span></div>
+      <div class="bar mt-2"><span style="width:100%;background:var(--r)"></span></div>
+    </div>
+    <div class="panel p-4 kpi">
+      <div class="l">Net Shipping / SPV</div>
+      <div class="flex items-baseline gap-2"><div class="v num" id="kpiShp">10.0%</div><span class="chip pill-y">cap ≤ 7%</span></div>
+      <div class="bar mt-2"><span style="width:100%;background:var(--y)"></span></div>
+    </div>
+    <div class="panel p-4 kpi">
+      <div class="l">Blended COGS / SPV</div>
+      <div class="flex items-baseline gap-2"><div class="v num" id="kpiCogs">25.6%</div><span class="chip pill-r">cap &lt; 23%</span></div>
+      <div class="bar mt-2"><span style="width:100%;background:var(--r)"></span></div>
+    </div>
+  </div>
+
+  <!-- C2 bridge + Escalation board -->
+  <div class="grid lg:grid-cols-2 gap-4">
+    <div class="panel p-5">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-base font-semibold">C2 Bridge — Mar 2026 actual → 45% target</h3>
+        <span class="chip pill-y">Gap: −4.0pp</span>
+      </div>
+      <table>
+        <thead><tr><th>Driver</th><th class="text-right">pp gap</th><th class="text-right">EGP impact (est.)</th><th>Owner</th></tr></thead>
+        <tbody id="bridgeBody"></tbody>
+      </table>
+    </div>
+
+    <div class="panel p-5">
+      <h3 class="text-base font-semibold mb-3">Escalation Thresholds — Live status</h3>
+      <table>
+        <thead><tr><th>Trigger</th><th>Threshold</th><th>Current</th><th>Status</th></tr></thead>
+        <tbody id="escBody"></tbody>
+      </table>
+      <div class="text-[11px] text-slate-400 mt-3">Any breach → immediate escalation to Salah / Lamis.</div>
+    </div>
+  </div>
+
+  <!-- Brand cap mini-grid -->
+  <div class="panel p-5">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-base font-semibold">Brand COGS Cap Status — Mar 2026</h3>
+      <span class="text-xs text-slate-400">Cap: COGS / Product SPV &lt; 23%</span>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-6 gap-3" id="brandGrid"></div>
+  </div>
+
+</section>
+
+<!-- ================= 2. ACTION PLAN ================= -->
+<section data-pane="actions" class="hidden space-y-4">
+
+  <!-- Filters -->
+  <div class="panel p-4 flex flex-wrap gap-3 items-center">
+    <div class="text-sm font-semibold">Filters:</div>
+    <select id="fPillar"><option value="">All Pillars</option></select>
+    <select id="fOwner"><option value="">All Owners</option></select>
+    <select id="fStatus">
+      <option value="">All Status</option>
+      <option>Not Started</option><option>In Progress</option><option>Blocked</option><option>Done</option>
+    </select>
+    <select id="fLight">
+      <option value="">All Traffic</option>
+      <option value="g">Green</option><option value="y">Yellow</option><option value="r">Red</option>
+    </select>
+    <input id="fSearch" placeholder="Search activity…" class="flex-1 min-w-[200px]" />
+    <button class="btn btn-pri" onclick="addAction()">+ Add Activity</button>
+  </div>
+
+  <!-- Pillar progress strip -->
+  <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3" id="pillarProgress"></div>
+
+  <!-- Action table -->
+  <div class="panel scroll">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:36px"></th>
+          <th>Activity</th>
+          <th>Pillar</th>
+          <th>Owner</th>
+          <th>Due</th>
+          <th>Impact (EGP)</th>
+          <th>Status</th>
+          <th>Light</th>
+          <th>Note</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="actBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ================= 3. DECISIONS ================= -->
+<section data-pane="decisions" class="hidden space-y-4">
+  <div class="panel p-5">
+    <div class="flex items-center justify-between mb-3">
+      <div>
+        <h3 class="text-base font-semibold">Decision Log</h3>
+        <div class="text-[11px] text-slate-400 mt-1">Max 3 decisions per Sunday session, ranked by EGP impact. Every decision has one owner.</div>
+      </div>
+      <button class="btn btn-pri" onclick="addDecision()">+ Add Decision</button>
+    </div>
+    <table>
+      <thead>
+        <tr><th>#</th><th>Decision</th><th>Financial Impact</th><th>Owner</th><th>Approver</th><th>Status</th><th>Date</th><th></th></tr>
+      </thead>
+      <tbody id="decBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ================= 4. RISKS ================= -->
+<section data-pane="risks" class="hidden space-y-4">
+  <div class="panel p-5">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-base font-semibold">Risk Register</h3>
+      <button class="btn btn-pri" onclick="addRisk()">+ Add Risk</button>
+    </div>
+    <table>
+      <thead><tr><th>Risk</th><th>Probability</th><th>EGP Exposure</th><th>Mitigation</th><th>Owner</th><th>Status</th><th></th></tr></thead>
+      <tbody id="riskBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ================= 5. BRAND BREACH ================= -->
+<section data-pane="brands" class="hidden space-y-4">
+  <div id="brandPanels" class="space-y-4"></div>
+</section>
+
+<!-- ================= 6. AGENDA ================= -->
+<section data-pane="agenda" class="hidden space-y-4">
+  <div class="panel p-5">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-base font-semibold">Sunday War Room — Auto-generated Agenda</h3>
+      <button class="btn" onclick="copyAgenda()">Copy to Clipboard</button>
+    </div>
+    <pre id="agendaOut" class="panel2 p-4 text-[12.5px] leading-6 whitespace-pre-wrap font-mono"></pre>
+  </div>
+</section>
+
+</main>
+
+<script>
+/* =========================================================
+   STATE
+========================================================= */
+const PILLARS = [
+  {id:'P0', name:'Active Breaches (immediate)', color:'r'},
+  {id:'P1', name:'P1 — COGS Recovery', color:'r'},
+  {id:'P2', name:'P2 — B2B Pharmacy Scale', color:'b'},
+  {id:'P3', name:'P3 — New Product Launches', color:'p'},
+  {id:'P4', name:'P4 — GCC Expansion', color:'b'},
+  {id:'P5', name:'P5 — Digital / ERP', color:'b'},
+  {id:'P6', name:'P6 — Channel Diversification', color:'p'},
+  {id:'P7', name:'P7 — Influencer Commission', color:'p'},
+  {id:'P8', name:'Governance / Recurring', color:'g'},
+];
+
+const OWNERS = ['Sherif','Salah','Lamis','Fayrouz','Mohammed Saad','Youssef','Rami','Aliaa','Asmaa','Omar Tayeh','Omar Yehia','Khaled Ouf','Peter','Omnia','Mohamed Tawfik','Dr. Adoub','Dr. Amr','Mahmoud Kamal','Ahmed Hossam','Kame House','Dina'];
+
+const SEED_ACTIONS = [
+  // ---- ACTIVE BREACHES ----
+  {p:'P0', t:'C2 bridge plan to executive — close 4pp gap to 45%', o:'Sherif', due:'Wk 1', egp:600000, s:'In Progress', l:'y', n:'Mar 2026 C2 = 41%. Bridge: COGS +1.7pp, Mktg +5.4pp, Shipping +1.5pp.'},
+  {p:'P0', t:'Media buying audit — Mktg+Tools 27.9% → 20% cap', o:'Omar Tayeh', due:'M1', egp:1500000, s:'In Progress', l:'r', n:'Per-platform, per-brand campaign-level cull. Three-bucket (20/55/25) re-baseline.'},
+  {p:'P0', t:'Blended MER 3.9× → 6× floor — platform diagnosis', o:'Omar Tayeh', due:'M1', egp:2000000, s:'In Progress', l:'r', n:'Per-brand MER < 6× audit. Cold prospecting waste hypothesis primary.'},
+  {p:'P0', t:'OhanaBaths paid ads freeze status review', o:'Sherif', due:'Wk 1', egp:0, s:'In Progress', l:'r', n:'Confirm freeze still active. Define unfreeze gates: COGS <23% + 6× MER pre-condition.'},
+  {p:'P0', t:'Flextock deduction creep — escalation to ops director', o:'Youssef', due:'M1', egp:300000, s:'Not Started', l:'y', n:'Rates approaching 18.5%. Renegotiation or RFP alternate 3PL.'},
+  {p:'P0', t:'Handling fee EGP 60 + 40ml upsell — enforce on all checkouts', o:'Sherif', due:'Recurring', egp:400000, s:'In Progress', l:'y', n:'Net shipping 10% → 6.5% target. COD 76.7% sensitivity.'},
+
+  // ---- P1 COGS RECOVERY ----
+  {p:'P1', t:'OhanaBaths SKU-level COGS audit (36.3% → <23%)', o:'Sherif', due:'M1', egp:1200000, s:'Not Started', l:'r', n:'Critical breach. Deepest gap. Pack/wax/fragrance unit cost decomposition.'},
+  {p:'P1', t:'ECC/FSM contract reset — volume rebates + raw mat indexation', o:'Sherif', due:'M2', egp:2500000, s:'Not Started', l:'r', n:'Founder-respect protocol: Dr. Adoub co-leads.'},
+  {p:'P1', t:'OhanaBaths reformulation gate — bath bombs + candle wax', o:'Dr. Adoub', due:'M2', egp:800000, s:'Not Started', l:'y', n:'R&D internal. Maintain product story; cut hidden cost.'},
+  {p:'P1', t:'Cleo COGS recovery before Sep rebrand (29.5% → <23%)', o:'Dr. Adoub', due:'M3', egp:1500000, s:'Not Started', l:'r', n:'Hard gate. No rebrand launch unless COGS under cap by Aug 2026.'},
+  {p:'P1', t:'Kayanek transfer pricing audit (≥40% gross margin floor)', o:'Khaled Ouf', due:'M1', egp:600000, s:'Not Started', l:'r', n:'Marketplace, not B2B. Floor enforcement on all CDH-to-Kayanek transfers.'},
+  {p:'P1', t:'Pack & component cost reduction — all brands sweep', o:'Youssef', due:'M2', egp:900000, s:'Not Started', l:'y', n:'Bottles, caps, cartons, labels. Cross-brand spec consolidation.'},
+  {p:'P1', t:'Monthly COGS variance review — every brand', o:'Sherif', due:'Recurring', egp:0, s:'In Progress', l:'g', n:'Always SPV denominator. Never cogs_to_net_vat_ratio.'},
+
+  // ---- P2 B2B PHARMACY ----
+  {p:'P2', t:'Top-50 pharmacy chain coverage map', o:'Ahmed Hossam', due:'M1', egp:0, s:'Not Started', l:'b', n:'Geo + chain footprint. Whitespace identification.'},
+  {p:'P2', t:'Pharmacy SKU rationalisation — kill the long tail', o:'Dr. Amr', due:'M2', egp:400000, s:'Not Started', l:'b', n:'Founder-respect protocol. Margin floor + velocity gate.'},
+  {p:'P2', t:'Wholesale pricing reset — margin floor enforcement', o:'Mahmoud Kamal', due:'M1', egp:500000, s:'Not Started', l:'b', n:'Eliminate sub-floor deals.'},
+  {p:'P2', t:'Pharmacy POS data integration', o:'Kame House', due:'M3', egp:0, s:'Not Started', l:'b', n:'Sell-out visibility prerequisite for any expansion case.'},
+
+  // ---- P3 NEW LAUNCHES ----
+  {p:'P3', t:'Cocoflo launch readiness gate — COGS <23% pre-launch', o:'Dr. Adoub', due:'Aug 2026', egp:0, s:'In Progress', l:'y', n:'Sep 2026 launch. Hair care, Gen-Z, pink + lime. ECC/FSM.'},
+  {p:'P3', t:'Cleo rebrand campaign brief — Hyalu Cica, Oily, Hair', o:'Aliaa', due:'Jul 2026', egp:0, s:'Not Started', l:'y', n:'Sep 2026 rebrand. Lamis approves creative.'},
+  {p:'P3', t:'Dermatique lip cadence calendar — year-round', o:'Asmaa', due:'M1', egp:0, s:'Not Started', l:'b', n:'Re-acceleration priority brand.'},
+  {p:'P3', t:'Skinside functional-to-beauty bridge launch sequence', o:'Sherif', due:'M2-M6', egp:0, s:'Not Started', l:'b', n:'Foundation Serum, Body Milk, Niacinamide Wash, Eyelash, Concealer, Lip Serum Oil.'},
+  {p:'P3', t:'Blankie kids ecosystem expansion', o:'Dr. Adoub', due:'M3-M6', egp:0, s:'Not Started', l:'g', n:'Detangler, Sun Roll, Deo, Lip Balm, Curly, Wipes feasibility.'},
+  {p:'P3', t:'OhanaBaths daily lifestyle expansion (post-COGS fix)', o:'Dr. Adoub', due:'M4', egp:0, s:'Blocked', l:'r', n:'Blocked until COGS cap restored. Air fresheners, gift sets, hand cream.'},
+
+  // ---- P4 GCC ----
+  {p:'P4', t:'UAE market entry feasibility memo', o:'Sherif', due:'M3', egp:0, s:'Not Started', l:'b', n:'Leading candidate. Distributor vs DTC model decision.'},
+  {p:'P4', t:'KSA Sun Gel LE — first GCC SKU test', o:'Dr. Adoub', due:'M4', egp:0, s:'Not Started', l:'b', n:'Limited edition seasonal. Low-risk pilot.'},
+  {p:'P4', t:'GCC distributor shortlist + LOI', o:'Sherif', due:'M4', egp:0, s:'Not Started', l:'b', n:'≥5× ROI gate.'},
+  {p:'P4', t:'GCC go/no-go decision — M6 gate', o:'Salah', due:'M6', egp:0, s:'Not Started', l:'b', n:'Sherif proposes; Salah/Lamis approve.'},
+
+  // ---- P5 DIGITAL/ERP ----
+  {p:'P5', t:'CDH MCP reconciliation gap — close 779K variance', o:'Peter', due:'M1', egp:0, s:'In Progress', l:'y', n:'Sherif 15.565M vs API 16.344M Mar 2026. Status filter root cause.'},
+  {p:'P5', t:'ERP RFP — replace fragmented finance/ops stack', o:'Sherif', due:'M2', egp:0, s:'Not Started', l:'b', n:'Kame House supports vendor eval.'},
+  {p:'P5', t:'Order status taxonomy lock — completed/dlv/processing/on-hold', o:'Kame House', due:'M1', egp:0, s:'Not Started', l:'y', n:'Eliminates query ambiguity across reports.'},
+  {p:'P5', t:'BI dashboard consolidation — single source for War Room', o:'Peter', due:'M2', egp:0, s:'In Progress', l:'g', n:'Hardcoded Approach C. SPV denominator only.'},
+
+  // ---- P6 CHANNELS ----
+  {p:'P6', t:'Amazon EG/UAE listing expansion', o:'Omar Yehia', due:'M2', egp:0, s:'Not Started', l:'b', n:'A+ content, ratings strategy, FBA economics.'},
+  {p:'P6', t:'Noon expansion plan', o:'Omar Yehia', due:'M2', egp:0, s:'Not Started', l:'b', n:'Per-SKU contribution ≥ DTC floor.'},
+  {p:'P6', t:'Jumia profitability review — keep/exit decision', o:'Omar Yehia', due:'M1', egp:0, s:'Not Started', l:'y', n:'C2 floor or exit.'},
+  {p:'P6', t:'Kayanek 3rd-party brand acquisition pipeline', o:'Khaled Ouf', due:'M3', egp:0, s:'Not Started', l:'b', n:'≥40% margin floor on all listings.'},
+
+  // ---- P7 INFLUENCER ----
+  {p:'P7', t:'Influencer commission model design — replace flat fee', o:'Asmaa', due:'M1', egp:600000, s:'Not Started', l:'b', n:'Coupon-attributed performance pay. ROI classification mandatory.'},
+  {p:'P7', t:'Influencer ROI classification audit — full roster', o:'Asmaa', due:'M1', egp:0, s:'Not Started', l:'y', n:'Exclude Service Fees rows. Per-brand attribution.'},
+  {p:'P7', t:'Top-20 influencer renegotiation', o:'Asmaa', due:'M2', egp:400000, s:'Not Started', l:'b', n:'Migrate to commission. Drop sub-2× ROI partners.'},
+
+  // ---- GOVERNANCE ----
+  {p:'P8', t:'Sunday War Room scorecard prep — every Saturday', o:'Peter', due:'Recurring', egp:0, s:'In Progress', l:'g', n:'Numbers only. No narrative. Approach C.'},
+  {p:'P8', t:'Weekly C2 bridge update — every Monday', o:'Sherif', due:'Recurring', egp:0, s:'In Progress', l:'g', n:'Cap-breach drivers ranked by EGP impact.'},
+  {p:'P8', t:'Monthly per-brand MER + Marketing/SPV exec brief', o:'Sherif', due:'Recurring', egp:0, s:'In Progress', l:'g', n:'Salah / Lamis distribution.'},
+  {p:'P8', t:'Kame House subscription registry review (vendor ops)', o:'Sherif', due:'Recurring', egp:0, s:'In Progress', l:'g', n:'Italian co. €1K/mo, Latias, OpenAI/GenSpark baseline open.'},
+  {p:'P8', t:'Collection monitoring — Flextock/Khazenly/Accept/Fawaterak', o:'Fayrouz', due:'Recurring', egp:24220000, s:'In Progress', l:'y', n:'Total unconfirmed pending Jan25–Feb26: EGP 24.22M.'},
+];
+
+const SEED_DECISIONS = [
+  {n:'D1', t:'Approve OhanaBaths reformulation budget — bath bombs + candle wax', impact:800000, o:'Sherif', a:'Salah', s:'Pending', d:''},
+  {n:'D2', t:'Authorize media buying campaign-level cull — pause sub-4× MER campaigns', impact:1500000, o:'Omar Tayeh', a:'Sherif', s:'Pending', d:''},
+  {n:'D3', t:'Lock Cleo rebrand gate — no Sep launch unless COGS <23% by 31 Aug', impact:1500000, o:'Sherif', a:'Salah', s:'Pending', d:''},
+];
+
+const SEED_RISKS = [
+  {t:'Cleo Sep rebrand misses COGS gate', p:'M', e:1500000, m:'Hard gate enforcement; reformulation tracked weekly', o:'Dr. Adoub', s:'Open'},
+  {t:'OhanaBaths critical breach drags blended COGS for Q3', p:'H', e:1200000, m:'SKU audit + ECC contract reset M1-M2', o:'Sherif', s:'Open'},
+  {t:'Flextock deduction rate continues to creep > 19%', p:'M', e:300000, m:'Renegotiation + 3PL RFP fallback', o:'Youssef', s:'Open'},
+  {t:'GCC expansion locks capital before EG turnaround complete', p:'L', e:0, m:'M6 go/no-go gate; ROI ≥ 5× pre-condition', o:'Sherif', s:'Open'},
+  {t:'EGP 24.22M pending collections aging beyond Q2', p:'M', e:24220000, m:'Weekly partner reconciliation; finance escalation', o:'Fayrouz', s:'Open'},
+  {t:'Per-brand MER < 6× signals platform-level break (not creative)', p:'H', e:2000000, m:'Platform diagnostic + bucket re-baseline', o:'Omar Tayeh', s:'Open'},
+];
+
+const BRANDS = [
+  {b:'OhanaBaths',  cogs:36.3, status:'Critical',  c2:18,  notes:'Ads frozen. SKUs hosted on Dermatique site. SKU-level audit + reformulation gate before any unfreeze.'},
+  {b:'Cleo',        cogs:29.5, status:'Breach',    c2:30,  notes:'Sep 2026 rebrand. "Buy 2 Save 30%". Hard gate: COGS <23% by 31 Aug or rebrand slips.'},
+  {b:'Kayanek',     cogs:26.9, status:'Breach',    c2:33,  notes:'CDH-owned marketplace. Transfer pricing audit. ≥40% gross margin floor enforcement.'},
+  {b:'Dermatique',  cogs:23.5, status:'At cap',    c2:43,  notes:'Re-acceleration priority. Lip cadence + 3-phase sun. KSA Sun Gel LE first GCC test.'},
+  {b:'Skinside',    cogs:21.7, status:'Under cap', c2:46,  notes:'Functional-to-beauty bridge. Near cap — watch ASP movement.'},
+  {b:'Blankie',     cogs:19.7, status:'Healthy',   c2:48,  notes:'Kids ecosystem. Capacity for incremental SKU expansion.'},
+];
+
+const C2_BRIDGE = [
+  {d:'COGS over-cap',         pp:1.7, egp:265000, owner:'Sherif + Dr. Adoub'},
+  {d:'Marketing + Tools over-cap', pp:5.4, egp:840000, owner:'Omar Tayeh'},
+  {d:'Net Shipping over-cap', pp:1.5, egp:235000, owner:'Sherif + Rami'},
+  {d:'Mix / Other',           pp:-4.6, egp:-720000, owner:'—'},
+];
+
+const ESC = [
+  {trig:'Blended MER',                threshold:'< 5×',     cur:'3.9×',  l:'r'},
+  {trig:'Blended C2',                 threshold:'< 35%',    cur:'41%',   l:'g'},
+  {trig:'Any brand Marketing / SPV',  threshold:'> 30%',    cur:'OhanaBaths flagged', l:'y'},
+  {trig:'Any brand RTO',              threshold:'> 20%',    cur:'Cleo P2 17.6%',      l:'y'},
+  {trig:'Monthly bleed',              threshold:'> EGP 2M', cur:'Tracking',           l:'y'},
+];
+
+/* =========================================================
+   PERSISTENCE
+========================================================= */
+const KEY = 'cdh-warroom-v1';
+let state = load();
+
+function load(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return {actions:JSON.parse(JSON.stringify(SEED_ACTIONS)), decisions:JSON.parse(JSON.stringify(SEED_DECISIONS)), risks:JSON.parse(JSON.stringify(SEED_RISKS))};
+}
+function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
+
+/* =========================================================
+   TABS
+========================================================= */
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    const target = t.dataset.tab;
+    document.querySelectorAll('section[data-pane]').forEach(s=>{
+      s.classList.toggle('hidden', s.dataset.pane!==target);
+    });
+    if(target==='agenda') renderAgenda();
+  });
+});
+
+/* =========================================================
+   SCORECARD RENDER
+========================================================= */
+function renderBridge(){
+  const tbody = document.getElementById('bridgeBody');
+  tbody.innerHTML = C2_BRIDGE.map(r=>`
+    <tr>
+      <td>${r.d}</td>
+      <td class="text-right num ${r.pp>0?'text-rose-300':'text-emerald-300'}">${r.pp>0?'+':''}${r.pp.toFixed(1)}pp</td>
+      <td class="text-right num">${fmt(r.egp)}</td>
+      <td class="text-slate-400">${r.owner}</td>
+    </tr>`).join('') +
+    `<tr class="font-semibold">
+      <td>Total gap explained</td>
+      <td class="text-right num text-rose-300">−4.0pp</td>
+      <td class="text-right num">${fmt(C2_BRIDGE.reduce((a,b)=>a+b.egp,0))}</td>
+      <td></td>
+    </tr>`;
+}
+function renderEsc(){
+  document.getElementById('escBody').innerHTML = ESC.map(e=>`
+    <tr>
+      <td>${e.trig}</td>
+      <td class="text-slate-400 num">${e.threshold}</td>
+      <td class="num">${e.cur}</td>
+      <td><span class="chip pill-${e.l}"><span class="light ${e.l}"></span>${e.l==='r'?'Breach':e.l==='y'?'Watch':'OK'}</span></td>
+    </tr>`).join('');
+}
+function renderBrandGrid(){
+  document.getElementById('brandGrid').innerHTML = BRANDS.map(b=>{
+    const light = b.cogs<23?'g': b.cogs<25?'y':'r';
+    return `<div class="panel2 p-3">
+      <div class="flex items-center justify-between">
+        <div class="text-sm font-semibold">${b.b}</div>
+        <span class="chip pill-${light}">${b.status}</span>
+      </div>
+      <div class="num text-2xl font-semibold mt-1">${b.cogs}%</div>
+      <div class="text-[11px] text-slate-400">COGS / Product SPV</div>
+      <div class="bar mt-2"><span style="width:${Math.min(100,(b.cogs/40)*100)}%;background:var(--${light})"></span></div>
+    </div>`;
+  }).join('');
+}
+
+/* =========================================================
+   ACTIONS RENDER
+========================================================= */
+function pillarById(id){ return PILLARS.find(p=>p.id===id) || PILLARS[0]; }
+
+function fillSelects(){
+  const fp = document.getElementById('fPillar');
+  fp.innerHTML = '<option value="">All Pillars</option>' + PILLARS.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  const fo = document.getElementById('fOwner');
+  const owners = [...new Set([...OWNERS, ...state.actions.map(a=>a.o)])].sort();
+  fo.innerHTML = '<option value="">All Owners</option>' + owners.map(o=>`<option>${o}</option>`).join('');
+}
+
+function renderPillarProgress(){
+  const wrap = document.getElementById('pillarProgress');
+  wrap.innerHTML = PILLARS.map(p=>{
+    const items = state.actions.filter(a=>a.p===p.id);
+    const done = items.filter(a=>a.s==='Done').length;
+    const total = items.length || 0;
+    const pct = total ? Math.round(done/total*100) : 0;
+    return `<div class="panel p-3">
+      <div class="flex items-center justify-between">
+        <div class="text-[12px] font-semibold">${p.name}</div>
+        <span class="chip pill-${p.color}">${done}/${total}</span>
+      </div>
+      <div class="bar mt-2"><span style="width:${pct}%;background:var(--${p.color})"></span></div>
+      <div class="text-[11px] text-slate-400 mt-1 num">${pct}% complete</div>
+    </div>`;
+  }).join('');
+}
+
+function renderActions(){
+  const fp = document.getElementById('fPillar').value;
+  const fo = document.getElementById('fOwner').value;
+  const fs = document.getElementById('fStatus').value;
+  const fl = document.getElementById('fLight').value;
+  const fq = document.getElementById('fSearch').value.toLowerCase();
+  const rows = state.actions
+    .map((a,i)=>({a,i}))
+    .filter(({a})=>(!fp||a.p===fp)&&(!fo||a.o===fo)&&(!fs||a.s===fs)&&(!fl||a.l===fl)&&(!fq||(a.t+' '+a.n).toLowerCase().includes(fq)));
+  const body = document.getElementById('actBody');
+  body.innerHTML = rows.map(({a,i})=>{
+    const p = pillarById(a.p);
+    return `<tr>
+      <td>${a.s==='Done'?'<span class="text-emerald-400">✓</span>':'<span class="text-slate-600">○</span>'}</td>
+      <td><div class="font-medium leading-snug">${esc(a.t)}</div></td>
+      <td><span class="chip pill-${p.color}">${p.name.replace(/^P\d ?[—-] ?/,'').replace('Active Breaches (immediate)','Breaches')}</span></td>
+      <td><select onchange="upd(${i},'o',this.value)">${optsOwners(a.o)}</select></td>
+      <td><input value="${esc(a.due)}" onchange="upd(${i},'due',this.value)" style="width:90px"/></td>
+      <td><input class="num text-right" value="${a.egp||0}" onchange="upd(${i},'egp',+this.value||0)" style="width:110px"/></td>
+      <td>${optsStatus(i,a.s)}</td>
+      <td>${optsLight(i,a.l)}</td>
+      <td><textarea onchange="upd(${i},'n',this.value)">${esc(a.n||'')}</textarea></td>
+      <td><button class="btn btn-d" onclick="delAct(${i})">×</button></td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="10" class="text-slate-500 text-center py-6">No activities match filters.</td></tr>`;
+}
+function optsOwners(cur){
+  const set = [...new Set([...OWNERS, cur])];
+  return set.map(o=>`<option ${o===cur?'selected':''}>${o}</option>`).join('');
+}
+function optsStatus(i,cur){
+  return ['Not Started','In Progress','Blocked','Done'].map(s=>{
+    const cls = s==='Done'?'pill-g':s==='In Progress'?'pill-b':s==='Blocked'?'pill-r':'pill-y';
+    return `<option value="${s}" ${s===cur?'selected':''}>${s}</option>`;
+  }).reduce((acc,o)=>acc+o, `<select onchange="upd(${i},'s',this.value)">`)+'</select>';
+}
+function optsLight(i,cur){
+  return `<select onchange="upd(${i},'l',this.value)">
+    <option value="g" ${cur==='g'?'selected':''}>● Green</option>
+    <option value="y" ${cur==='y'?'selected':''}>● Yellow</option>
+    <option value="r" ${cur==='r'?'selected':''}>● Red</option>
+  </select>`;
+}
+function upd(i,k,v){ state.actions[i][k]=v; save(); renderPillarProgress(); }
+function delAct(i){ if(confirm('Delete activity?')){ state.actions.splice(i,1); save(); renderActions(); renderPillarProgress(); fillSelects(); } }
+function addAction(){
+  state.actions.unshift({p:'P0',t:'New activity',o:'Sherif',due:'M1',egp:0,s:'Not Started',l:'y',n:''});
+  save(); renderActions(); renderPillarProgress();
+}
+
+['fPillar','fOwner','fStatus','fLight','fSearch'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', renderActions);
+});
+
+/* =========================================================
+   DECISIONS
+========================================================= */
+function renderDecisions(){
+  const body = document.getElementById('decBody');
+  const sorted = state.decisions.slice().sort((a,b)=>(b.impact||0)-(a.impact||0));
+  body.innerHTML = sorted.map((d,i)=>`
+    <tr>
+      <td class="font-semibold">${d.n||('D'+(i+1))}</td>
+      <td><textarea onchange="updDec(${i},'t',this.value)">${esc(d.t)}</textarea></td>
+      <td><input class="num text-right" value="${d.impact||0}" onchange="updDec(${i},'impact',+this.value||0)" style="width:130px"/></td>
+      <td><input value="${esc(d.o)}" onchange="updDec(${i},'o',this.value)" style="width:110px"/></td>
+      <td><input value="${esc(d.a)}" onchange="updDec(${i},'a',this.value)" style="width:110px"/></td>
+      <td><select onchange="updDec(${i},'s',this.value)">
+        ${['Pending','Approved','Rejected','Deferred'].map(s=>`<option ${s===d.s?'selected':''}>${s}</option>`).join('')}
+      </select></td>
+      <td><input value="${esc(d.d||'')}" onchange="updDec(${i},'d',this.value)" type="date" style="width:140px"/></td>
+      <td><button class="btn btn-d" onclick="delDec(${i})">×</button></td>
+    </tr>`).join('');
+}
+function updDec(i,k,v){ state.decisions[i][k]=v; save(); }
+function delDec(i){ state.decisions.splice(i,1); save(); renderDecisions(); }
+function addDecision(){
+  if(state.decisions.length>=3 && !confirm('War Room cap is 3 decisions per session. Add anyway?')) return;
+  state.decisions.push({n:'D'+(state.decisions.length+1),t:'New decision',impact:0,o:'Sherif',a:'Salah',s:'Pending',d:''});
+  save(); renderDecisions();
+}
+
+/* =========================================================
+   RISKS
+========================================================= */
+function renderRisks(){
+  const body = document.getElementById('riskBody');
+  body.innerHTML = state.risks.map((r,i)=>`
+    <tr>
+      <td><textarea onchange="updRisk(${i},'t',this.value)">${esc(r.t)}</textarea></td>
+      <td><select onchange="updRisk(${i},'p',this.value)">
+        ${['H','M','L'].map(s=>`<option ${s===r.p?'selected':''}>${s}</option>`).join('')}
+      </select></td>
+      <td><input class="num text-right" value="${r.e||0}" onchange="updRisk(${i},'e',+this.value||0)" style="width:130px"/></td>
+      <td><textarea onchange="updRisk(${i},'m',this.value)">${esc(r.m)}</textarea></td>
+      <td><input value="${esc(r.o)}" onchange="updRisk(${i},'o',this.value)" style="width:110px"/></td>
+      <td><select onchange="updRisk(${i},'s',this.value)">
+        ${['Open','Mitigating','Closed'].map(s=>`<option ${s===r.s?'selected':''}>${s}</option>`).join('')}
+      </select></td>
+      <td><button class="btn btn-d" onclick="delRisk(${i})">×</button></td>
+    </tr>`).join('');
+}
+function updRisk(i,k,v){ state.risks[i][k]=v; save(); }
+function delRisk(i){ state.risks.splice(i,1); save(); renderRisks(); }
+function addRisk(){
+  state.risks.push({t:'New risk',p:'M',e:0,m:'',o:'Sherif',s:'Open'});
+  save(); renderRisks();
+}
+
+/* =========================================================
+   BRAND PANELS
+========================================================= */
+function renderBrands(){
+  const wrap = document.getElementById('brandPanels');
+  wrap.innerHTML = BRANDS.map(b=>{
+    const light = b.cogs<23?'g': b.cogs<25?'y':'r';
+    const acts = state.actions.filter(a=>a.t.toLowerCase().includes(b.b.toLowerCase()) || (a.n||'').toLowerCase().includes(b.b.toLowerCase()));
+    return `<div class="panel p-5">
+      <div class="flex items-start justify-between">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="light ${light}"></span>
+            <h3 class="text-lg font-semibold">${b.b}</h3>
+            <span class="chip pill-${light}">${b.status}</span>
+          </div>
+          <div class="text-[12px] text-slate-400 mt-1">${b.notes}</div>
+        </div>
+        <div class="flex gap-4 text-right">
+          <div><div class="text-[11px] text-slate-400">COGS / SPV</div><div class="num text-xl font-semibold">${b.cogs}%</div></div>
+          <div><div class="text-[11px] text-slate-400">C2 (est.)</div><div class="num text-xl font-semibold">${b.c2}%</div></div>
+          <div><div class="text-[11px] text-slate-400">Gap to 23%</div><div class="num text-xl font-semibold ${b.cogs>23?'text-rose-300':'text-emerald-300'}">${b.cogs>23?'+'+(b.cogs-23).toFixed(1):(b.cogs-23).toFixed(1)}pp</div></div>
+        </div>
+      </div>
+      <div class="mt-3">
+        <div class="text-[11px] uppercase tracking-wide text-slate-400 mb-2">Linked activities (${acts.length})</div>
+        ${acts.length?`<ul class="space-y-1">${acts.map(a=>`
+          <li class="flex items-center gap-2 text-[13px]">
+            <span class="light ${a.l}"></span>
+            <span class="flex-1">${esc(a.t)}</span>
+            <span class="chip pill-b">${a.o}</span>
+            <span class="chip">${a.s}</span>
+          </li>`).join('')}</ul>`:`<div class="text-[12px] text-slate-500">No directly-linked activities.</div>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* =========================================================
+   AGENDA
+========================================================= */
+function renderAgenda(){
+  const top3 = state.decisions.slice().sort((a,b)=>(b.impact||0)-(a.impact||0)).slice(0,3);
+  const breaches = state.actions.filter(a=>a.l==='r' && a.s!=='Done').slice(0,5);
+  const blocked = state.actions.filter(a=>a.s==='Blocked');
+  const thisWeek = state.actions.filter(a=>a.s==='In Progress' && a.due && /Wk|Week|M1/i.test(a.due)).slice(0,5);
+  const today = new Date().toISOString().slice(0,10);
+  const out = `SUNDAY WAR ROOM — ${today}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. SCORECARD
+   Blended MER:           3.9×    (target 6×, floor 5.5×)        ●
+   Blended C2:            41.0%   (target ≥ 45%)                 ●
+   Marketing+Tools/SPV:   27.9%   (cap ≤ 20%)                    ●
+   Net Shipping/SPV:      10.0%   (cap ≤ 7%)                     ●
+   Blended COGS/SPV:      25.6%   (cap < 23%)                    ●
+   Top brand by C2:       Skinside (~46%)
+   Bleeding brand:        OhanaBaths — COGS 36.3%, EGP ~1.2M monthly drag
+
+2. DECISIONS REQUIRED (max 3, ranked by EGP impact)
+${top3.map((d,i)=>`   D${i+1}: ${d.t}
+        Impact: ${fmt(d.impact)}  ·  Owner: ${d.o}  ·  Approver: ${d.a}  ·  Status: ${d.s}`).join('\n')}
+
+3. OPEN RISKS
+${state.risks.filter(r=>r.s!=='Closed').map(r=>`   • ${r.t}  —  P:${r.p}  ·  Exposure: ${fmt(r.e)}  ·  Owner: ${r.o}`).join('\n')}
+
+4. ACTIONS FROM LAST WEEK
+   Done:      ${state.actions.filter(a=>a.s==='Done').length}
+   Pending:   ${state.actions.filter(a=>a.s==='In Progress').length}
+   Blocked:   ${blocked.length}
+${blocked.map(a=>`   ! ${a.t}  —  ${a.o}`).join('\n')}
+
+5. THIS WEEK'S TARGETS
+${thisWeek.map(a=>`   • ${a.t}  —  ${a.o}  —  Due: ${a.due}`).join('\n')}
+
+6. TOP RED-LIGHT ACTIVITIES (immediate)
+${breaches.map(a=>`   ● ${a.t}  —  ${a.o}  —  ${a.due}`).join('\n')}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Governance rules:
+  · No decisions without numbers
+  · Max 3 decisions, ranked by EGP impact (not urgency)
+  · Every decision has one owner — no shared ownership
+  · Cap breaches stay on agenda until resolved
+  · Escalate immediately: MER<5×, C2<35%, brand Mktg/SPV>30%, RTO>20%, bleed>EGP 2M
+`;
+  document.getElementById('agendaOut').textContent = out;
+}
+function copyAgenda(){
+  navigator.clipboard.writeText(document.getElementById('agendaOut').textContent);
+}
+
+/* =========================================================
+   UTILS
+========================================================= */
+function esc(s){ return String(s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function fmt(n){
+  if(!n) return 'EGP 0';
+  const a=Math.abs(n);
+  if(a>=1e6) return 'EGP '+(n/1e6).toFixed(2)+'M';
+  if(a>=1e3) return 'EGP '+(n/1e3).toFixed(0)+'K';
+  return 'EGP '+n.toLocaleString();
+}
+function exportJSON(){
+  const blob = new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=`cdh-warroom-${new Date().toISOString().slice(0,10)}.json`; a.click();
+}
+function importJSON(){
+  const inp = document.createElement('input'); inp.type='file'; inp.accept='.json';
+  inp.onchange = e=>{
+    const f = e.target.files[0]; if(!f) return;
+    const r = new FileReader();
+    r.onload = ()=>{ try{ state = JSON.parse(r.result); save(); renderAll(); }catch(err){ alert('Invalid file'); } };
+    r.readAsText(f);
+  };
+  inp.click();
+}
+function resetAll(){
+  if(!confirm('Reset to seed data? Current state will be lost.')) return;
+  localStorage.removeItem(KEY);
+  state = load();
+  renderAll();
+}
+
+/* =========================================================
+   INIT
+========================================================= */
+function renderAll(){
+  fillSelects();
+  renderBridge();
+  renderEsc();
+  renderBrandGrid();
+  renderPillarProgress();
+  renderActions();
+  renderDecisions();
+  renderRisks();
+  renderBrands();
+  renderAgenda();
+}
+renderAll();
+</script>
+</body>
+</html>
