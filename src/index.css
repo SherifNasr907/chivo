@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(1200px 600px at 100% -10%, #131b33 0%, #070a12 55%);
+  color: #e2e8f0;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'tnum';
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Numeric alignment in tables */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Thin scrollbars that suit the dark theme */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2a3550 transparent;
+}
+*::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #2a3550;
+  border-radius: 999px;
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
